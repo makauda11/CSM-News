@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CSM News">
+  <link rel="apple-touch-icon" sizes="512x512" href="/CSM-Account-News/icon.png">
+  <link rel="manifest" href="/CSM-Account-News/manifest.json">
+  <meta name="theme-color" content="#0d0d0d">
+  <title>CSM News</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{background:#0d0d0d;color:#e8e8e8;font-family:system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%;min-height:100vh}
+    @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+    /* Header */
+    .header{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;border-bottom:1px solid #1e1e1e;position:sticky;top:0;background:#0d0d0d;z-index:100}
+    .header-logo{font-size:16px;font-weight:700;color:#1E2EDE;letter-spacing:-0.3px}
+    .header-title{font-size:13px;color:#555;margin-left:16px}
+    .header-left{display:flex;align-items:center;gap:0}
+    .header-divider{width:1px;height:20px;background:#1e1e1e;margin:0 16px}
+    .refresh-btn{background:#1E2EDE;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;-webkit-tap-highlight-color:transparent}
+    .refresh-btn:active{opacity:0.8}
+    .refresh-btn.loading .spin{animation:spin 1s linear infinite}
+
+    /* Stats bar */
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#1a1a1a;border-bottom:1px solid #1a1a1a}
+    .stat{background:#111;padding:16px 20px}
+    .stat-label{font-size:9px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+    .stat-value{font-size:13px;font-weight:700;color:#e8e8e8}
+    .stat-sub{font-size:11px;color:#555;margin-top:3px}
+    .stat.red .stat-value{color:#ef4444}
+    .stat.yellow .stat-value{color:#f59e0b}
+    .stat.green .stat-value{color:#22c55e}
+
+    /* Filters */
+    .filters{padding:12px 16px;display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;border-bottom:1px solid #1a1a1a;background:#0d0d0d}
+    .filters::-webkit-scrollbar{display:none}
+    .filter-btn{background:transparent;color:#555;border:1px solid #1e1e1e;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;letter-spacing:0.3px}
+    .filter-btn.active{background:#1E2EDE;color:#fff;border-color:#1E2EDE}
+    .filter-btn.active-red{background:rgba(239,68,68,0.15);color:#ef4444;border-color:rgba(239,68,68,0.3)}
+    .filter-btn.active-yellow{background:rgba(245,158,11,0.15);color:#f59e0b;border-color:rgba(245,158,11,0.3)}
+    .filter-btn.active-green{background:rgba(34,197,94,0.15);color:#22c55e;border-color:rgba(34,197,94,0.3)}
+    .badge{display:inline-block;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:4px;background:#1a1a1a;color:#555}
+    .filter-btn.active .badge{background:rgba(255,255,255,0.2);color:#fff}
+    .filter-btn.active-red .badge{background:rgba(239,68,68,0.2);color:#ef4444}
+    .filter-btn.active-yellow .badge{background:rgba(245,158,11,0.2);color:#f59e0b}
+    .filter-btn.active-green .badge{background:rgba(34,197,94,0.2);color:#22c55e}
+
+    /* Cards */
+    .cards{padding:16px}
+    .card{background:#111;border:1px solid #1e1e1e;border-radius:10px;margin-bottom:12px;overflow:hidden}
+    .card:hover{border-color:#2a2a2a}
+
+    /* Card header */
+    .card-header{padding:14px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #1a1a1a;position:relative}
+    .card-header::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:10px 0 0 0}
+    .card-header.green::before{background:#22c55e}
+    .card-header.yellow::before{background:#f59e0b}
+    .card-header.red::before{background:#ef4444}
+    .logo-wrap{width:36px;height:36px;border-radius:8px;background:#1a1a1a;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;border:1px solid #222}
+    .logo-wrap img{width:30px;height:30px;object-fit:contain}
+    .logo-initials{width:36px;height:36px;border-radius:8px;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#555;flex-shrink:0;border:1px solid #222}
+    .client-name{font-weight:700;font-size:14px;color:#e8e8e8;line-height:1.2}
+    .client-meta{font-size:11px;color:#555;margin-top:2px}
+    .health-badge{font-size:10px;font-weight:600;border-radius:5px;padding:3px 8px;white-space:nowrap;flex-shrink:0;margin-left:auto;letter-spacing:0.3px}
+    .health-green{background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.2)}
+    .health-yellow{background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.2)}
+    .health-red{background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.2)}
+
+    /* Card body */
+    .card-body{padding:14px 16px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #1a1a1a}
+    .row:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+    .row.single{grid-template-columns:1fr}
+    .section-label{font-size:9px;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+    .section-text{font-size:12px;color:#aaa;line-height:1.6}
+    .section-text.white{color:#ccc}
+
+    /* News box */
+    .news-box{background:#0d0d0d;border-radius:8px;padding:10px 12px;border:1px solid #1a1a1a}
+    .risk-box{background:#0d0d0d;border-radius:8px;padding:10px 12px;border:1px solid #1a1a1a}
+
+    /* Ticket status */
+    .ticket-id{font-size:12px;font-weight:600;color:#ccc;margin-bottom:4px;line-height:1.4}
+    .ticket-status{display:inline-block;font-size:9px;font-weight:700;border-radius:4px;padding:2px 7px;letter-spacing:0.5px;margin:4px 0}
+    .status-progress{background:rgba(30,46,222,0.15);color:#6b7fff;border:1px solid rgba(30,46,222,0.25)}
+    .status-level{background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.2)}
+    .status-resolved{background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.2)}
+    .status-default{background:#1a1a1a;color:#555;border:1px solid #222}
+
+    /* Email */
+    .email-subject{font-size:12px;font-weight:600;color:#ccc;margin-bottom:3px;line-height:1.4}
+    .email-from{font-size:11px;color:#444;margin-bottom:5px}
+    .email-summary{font-size:12px;color:#888;line-height:1.5}
+    .email-date{font-size:10px;color:#333;margin-top:5px}
+
+    /* Action box */
+    .action-box{background:#0d0d0d;border-radius:8px;padding:12px 14px;border-left:3px solid #1E2EDE;border-top:1px solid #1a1a1a;border-right:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a}
+    .action-label{font-size:9px;font-weight:700;color:#1E2EDE;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+    .action-text{font-size:12.5px;color:#ccc;line-height:1.6;font-weight:500}
+
+    /* Link button */
+    .link-btn{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;text-decoration:none;border-radius:5px;padding:3px 8px;margin-top:6px;border:1px solid;letter-spacing:0.3px}
+    .no-ticket{font-size:11px;color:#333;font-style:italic}
+
+    .footer{text-align:center;font-size:10px;color:#2a2a2a;padding:12px 0 32px}
+    .week-label{font-size:12px;color:#444;padding:10px 24px;border-bottom:1px solid #1a1a1a;background:#0d0d0d}
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <span class="header-logo">Applivery</span>
+    <div class="header-divider"></div>
+    <span class="header-title">CSM News</span>
+  </div>
+  <button class="refresh-btn" id="refresh-btn" onclick="refreshAll()">
+    <span class="spin">↻</span><span id="refresh-label">Actualizar datos</span>
+  </button>
+</div>
+
+<!-- Week label -->
+<div class="week-label" id="week-label"></div>
+
+<!-- Stats -->
+<div class="stats" id="stats"></div>
+
+<!-- Filters -->
+<div class="filters" id="filters"></div>
+
+<!-- Cards -->
+<div class="cards" id="cards"></div>
+<div class="footer">Applivery CSM Agent · Jorge Macauda</div>
+
+<script>
+const hLabel = {green:'Saludable',yellow:'Atención',red:'Riesgo'};
+
+const clients = [
+  {id:1,name:'Sabadell',sector:'Banca',city:'Barcelona',domain:'bancosabadell.com',health:'yellow',brandColor:'#1B7AC4',
+   news:'La OPA hostil de BBVA fracasó en oct 2025. Sabadell anuncia 3.600M€ en retribución al accionista en 2026, incluyendo dividendo extraordinario por venta de TSB.',newsUrl:'https://www.expansion.com/empresas/banca/2025/10/01/sabadell-opa-bbva.html',
+   risk:'Sin riesgo de fusión inmediata, pero posible nueva OPA de BBVA en 2026. Incertidumbre estratégica puede ralentizar decisiones tecnológicas.',
+   trend:'Consolidación bancaria en España sigue activa. Los equipos IT de bancos bajo presión de fusión tienden a congelar gasto en herramientas SaaS.',
+   email:{from:'Alejandro Espejo (Contratación Sabadell)',subject:'RE: RITM0907766 — Certificación DORA',date:'18 mar 2026',summary:'Envía el documento de certificación DORA firmado. Proceso de compliance activo con SoftwareOne.'},
+   ticket:null,linearUrl:null,
+   linkedin:'Sesión sobre IA y empresas con expertos de Microsoft. Foco en transformación digital 2026.',linkedinUrl:'https://www.linkedin.com/company/banco-sabadell/',
+   action:'Buen momento para afianzar la relación y presentar roadmap de Applivery para 2026.'},
+
+  {id:2,name:'Cabify',sector:'Movilidad urbana',city:'Madrid',domain:'cabify.com',health:'red',brandColor:'#7C3AED',
+   news:'Nuevo patrocinador oficial del Atlético de Madrid (mar 2026). Integración del taxi en Barcelona con comisión del 7%.',newsUrl:'https://www.eleconomista.es/empresas-finanzas/noticias/cabify-atletico-madrid.html',
+   risk:'Miguel Ángel quiere cambiar de partner implementador por problemas con Devoteam. Nueva ley catalana del taxi puede eliminar el 85% de licencias VTC.',
+   trend:'Sector VTC bajo presión regulatoria. La movilidad corporativa emerge como palanca diferenciadora.',
+   email:{from:'Miguel Ángel Olivares (Global IT Manager)',subject:'Precio knox',date:'11 mar 2026',summary:'Pregunta por precio de licencias Knox (1,75€/dispositivo) y quiere explorar cambio de partner implementador.'},
+   ticket:{title:'Inconsistent device Last update date',status:'Level 3',desc:'Fechas de Last report inconsistentes en dispositivos. En investigación.'},linearUrl:'https://linear.app/applivery/issue/SUPR-cabify',
+   linkedin:'Lanzamiento del programa Cabify Rookie Excellence Program (CREP) segunda edición.',linkedinUrl:'https://www.linkedin.com/company/cabify/',
+   action:'Urgente: resolver cambio de partner implementador que solicita Miguel Ángel Olivares.'},
+
+  {id:3,name:'Sixt',sector:'Car Rental & Mobility',city:'Munich',domain:'sixt.com',health:'green',brandColor:'#FF6600',
+   news:'Año récord 2025: ingresos +9% hasta 4.300M EUR, beneficio +20%. Renovación App Distribution 2026-2027 firmada.',newsUrl:'https://ir.sixt.com/news-releases/news-release-details/sixt-record-results-2025',
+   risk:'Manuel Lilienberg se perdió la última llamada QBR. Expansión en LATAM puede presionar gestión de dispositivos.',
+   trend:'Car rental premium en transición hacia plataforma de movilidad. Sixt+ crece 25% YoY.',
+   email:{from:'Manuel Lilienberg',subject:'AW: QBR Follow-up CSM — Applivery/Sixt',date:'18 mar 2026',summary:'Se disculpa por perderse el QBR. Sin temas pendientes. Renovación App Distribution 2026-2027 ya firmada.'},
+   ticket:{title:'Windows/MacOS metrics in downloads dashboard',status:'In Progress',desc:'Métricas de Windows y macOS no se muestran correctamente en el dashboard de descargas.'},linearUrl:'https://linear.app/applivery/issue/SUPR-sixt',
+   linkedin:'Resultados récord 2025. Lanzamiento oficial de SIXT ONE loyalty program.',linkedinUrl:'https://www.linkedin.com/company/sixt/',
+   action:'Reagendar QBR con Manuel Lilienberg. Explorar expansión MDM en oficinas internacionales.'},
+
+  {id:4,name:'Acciona',sector:'Infraestructura & Energía',city:'Madrid',domain:'acciona.com',health:'yellow',brandColor:'#CC2200',
+   news:'Beneficio neto +90% en 2025. Nuevo contrato en Toronto (tranvía ligero, 2.000M€).',newsUrl:'https://www.acciona.com/es/sala-prensa/noticias/2025/resultados-2025/',
+   risk:'Investigación UCO sobre conexiones con Santos Cerdán. Riesgo reputacional.',
+   trend:'Tensiones geopolíticas disparan costes energéticos. Sector renovable bajo presión de precios bajistas.',
+   email:{from:'Fabriciano Gangoso',subject:'Re: EXT: Retención de Builds — Applivery',date:'25 feb 2026',summary:'Confirma que con los límites actuales de retención de builds están cubiertos. Sin urgencias activas.'},
+   ticket:{title:'App collab fails on creation',status:'Resolved',desc:'Problema con permisos de colaboradores. Resuelto.'},linearUrl:'https://linear.app/applivery/issue/SUPR-acciona',
+   linkedin:'Contrato Toronto (2.000M€) y resultados 2025 con beneficio neto +90%.',linkedinUrl:'https://www.linkedin.com/company/acciona/',
+   action:'Retomar conversación con propuesta de valor para equipos internacionales.'},
+
+  {id:5,name:'MobilityWare',sector:'Mobile Gaming',city:'Irvine, CA',domain:'mobilityware.com',health:'yellow',brandColor:'#0EA5E9',
+   news:'Expansión a Apple Arcade con juegos clásicos. Adquisición de Critical Hit Software.',newsUrl:'https://www.mobilityware.com/press/apple-arcade-expansion',
+   risk:'Kevin Toh pregunta sobre límites de publicaciones por app. Puede ser percibido como restricción no comunicada.',
+   trend:'Casual gaming móvil apuesta por suscripciones premium frente al modelo basado en publicidad.',
+   email:{from:'Kevin Toh',subject:'Applivery Maximum Publications per App Limit',date:'2 mar 2026',summary:'Pregunta sobre el límite de publicaciones por app. Quiere confirmar si afecta a sus apps.'},
+   ticket:null,linearUrl:null,
+   linkedin:'Expansión de juegos a Apple Arcade y lanzamiento de nuevos títulos.',linkedinUrl:'https://www.linkedin.com/company/mobilityware/',
+   action:'Responder a Kevin Toh sobre límites. Revisar si expansión a Apple Arcade requiere nuevas configuraciones.'},
+
+  {id:6,name:'Cecotec',sector:'Electrodomésticos',city:'Valencia',domain:'cecotec.es',health:'red',brandColor:'#00A4B4',
+   news:'Implementación MDM activa con problemas técnicos en macOS. Issues con Filevault y compliance.',newsUrl:null,
+   risk:'Implementación bloqueada por Filevault y compliance macOS no resueltos. Riesgo de frustración.',
+   trend:'Presión de marcas chinas (Xiaomi, Roborock). Cecotec apuesta por precio y canal propio.',
+   email:{from:'Alejandro Lizandra',subject:'Re: Implementation Document New Approbal',date:'11 mar 2026',summary:'Puntos pendientes: compliance y Filevault no se activan en dispositivos macOS de prueba.'},
+   ticket:{title:'Cecotec — Implementation',status:'In Progress',desc:'Pendiente resolución de Filevault y compliance en macOS.'},linearUrl:'https://linear.app/applivery/issue/SUPR-cecotec',
+   linkedin:'Nuevos productos: robot aspirador con navegación láser 5.000 Pa.',linkedinUrl:'https://www.linkedin.com/company/cecotec-electrodomesticos/',
+   action:'Proponer sesión técnica en vivo para desbloquear Filevault y compliance con Steven Gallardo.'},
+
+  {id:7,name:'Product Madness',sector:'Social Casino Gaming',city:'Londres',domain:'productmadness.com',health:'red',brandColor:'#2563EB',
+   news:'Premio Social Casino Operator of the Year en EKG Slot Awards 2026. Lanzamiento del juego NFL Super Bowl.',newsUrl:'https://www.egamingonline.com/ekg-slot-awards-2026-winners',
+   risk:'Sin contacto reciente. Cuenta sin actividad detectable. Riesgo de desengagement silencioso.',
+   trend:'Social casino gaming apuesta por licencias deportivas (NFL, NBA) para captar nuevas audiencias.',
+   email:{from:'Order form',subject:'Order form (Aristocrat Technologies — Product Madness)',date:'16 mar 2026',summary:'Formulario de pedido generado para cerrar el deal con Product Madness / Aristocrat Technologies.'},
+   ticket:null,linearUrl:null,
+   linkedin:'Premio EKG 2026. Lanzamiento del juego NFL Super Bowl con Micah Parsons.',linkedinUrl:'https://www.linkedin.com/company/product-madness/',
+   action:'Contacto proactivo urgente. Felicitar por el premio EKG como excusa para retomar la conversación.'},
+
+  {id:8,name:'Lidl SCRM',sector:'Digital Hub / Retail',city:'Barcelona',domain:'lidl.es',health:'yellow',brandColor:'#1565C0',
+   news:'Hub de digitalización activo en 14+ países con 300+ empleados. Proyectos: Lidl Plus, Lidl Pay, IA.',newsUrl:'https://www.scrm-lidl.com/news',
+   risk:'Sin contacto reciente. Dependencia del Grupo Schwarz puede limitar decisiones autónomas.',
+   trend:'Retail digital en Europa en expansión acelerada. IA y big data como diferenciación.',
+   email:{from:'Jose Manuel Villabón',subject:'Re: Inicio proyecto PoC MDM LIDL SCRM — Applivery',date:'5 mar 2026',summary:'Retoma contacto con Héctor Canet (scrm.lidl) tras el MWC. PoC MDM LIDL SCRM en fase de inicio.'},
+   ticket:null,linearUrl:null,
+   linkedin:'Proyectos de IA y big data para Lidl Plus internacional.',linkedinUrl:'https://www.linkedin.com/company/scrm-lidl/',
+   action:'Contacto proactivo para preguntar por proyectos que requieran gestión de dispositivos.'},
+
+  {id:9,name:'Aldar Properties',sector:'Real Estate',city:'Abu Dhabi',domain:'aldar.com',health:'yellow',brandColor:'#1C1C1C',
+   news:'Confirma continuidad operacional plena en UAE. Emitió bonos híbridos de 1.000M USD. QBR Q1 2026 realizado.',newsUrl:'https://www.aldar.com/en/media/press-releases/2026/operational-continuity',
+   risk:'Quieren aumentar límite de retención de builds. Puede ser bloqueante para la renovación.',
+   trend:'Mercado inmobiliario premium de UAE activo. Aldar Capital planea fondo de 1.000M USD.',
+   email:{from:'Balasubramaniyan Adimoolam',subject:'RE: QBR Meeting Q1 2026 — Applivery',date:'16 mar 2026',summary:'Agradece el QBR y quiere explorar opciones para aumentar el límite de retención de builds.'},
+   ticket:{title:'Workspace admin unable to add store employees',status:'Resolved',desc:'Resuelto el 2 mar 2026.'},linearUrl:'https://linear.app/applivery/issue/SUPR-aldar',
+   linkedin:'Continuidad operacional plena en UAE. Emisión de 1.000M USD en bonos híbridos.',linkedinUrl:'https://www.linkedin.com/company/aldar-properties/',
+   action:'Responder sobre opciones de retención de builds. Presentar plan de upgrade antes de la renovación.'},
+
+  {id:10,name:'Rally House',sector:'Retail deportivo',city:'Lenexa, KS',domain:'rallyhouse.com',health:'red',brandColor:'#B91C1C',
+   news:'Apertura de flagship en Filadelfia (feb 2026) y nueva tienda en Durham NC. +300 licencias activas para iPads.',newsUrl:'https://www.rallyhouse.com/about/news',
+   risk:'+300 licencias en proceso de compra. Necesita firma de Erik Hild. Riesgo de demora.',
+   trend:'Retail deportivo especializado crece frente a grandes cadenas. Experiencia local como diferenciador.',
+   email:{from:'Brooks Jones (IT Support Supervisor)',subject:'Re: Purchase licenses',date:'18 mar 2026',summary:'Confirma que las 300 licencias son independientes de las 1.000 anteriores. Solicita proceder.'},
+   ticket:null,linearUrl:null,
+   linkedin:'Apertura del flagship de Filadelfia y nueva tienda en Durham NC.',linkedinUrl:'https://www.linkedin.com/company/rally-house/',
+   action:'Urgente: gestionar la firma de Erik Hild para las 300 licencias adicionales de iPads.'},
+
+  {id:11,name:'Congreso de los Diputados',sector:'Institución pública',city:'Madrid',domain:'congreso.es',health:'yellow',brandColor:'#1A3A6B',
+   news:'Piloto Harmony Mobile-Applivery avanzando. Problema de app Checkpoint resuelto el 17 mar 2026.',newsUrl:null,
+   risk:'Ciclos de renovación tecnológica muy lentos. Riesgo de paralización por cambios políticos.',
+   trend:'Administración pública española refuerza requisitos ENS y soberanía digital.',
+   email:{from:'Antonio Luis Sánchez',subject:'RE: Incidencia Applivery update de dispositivos',date:'17 mar 2026',summary:'Resuelve el problema Checkpoint. Piloto Harmony Mobile avanzando con nuevos dispositivos.'},
+   ticket:{title:'Last report field shows outdated dates for admDevices',status:'Level 3',desc:'Fechas de Last report muy anteriores a la conexión real. En investigación.'},linearUrl:'https://linear.app/applivery/issue/SUPR-congreso',
+   linkedin:'Debates parlamentarios sobre regulación de IA y ciberseguridad nacional 2026.',linkedinUrl:'https://www.linkedin.com/company/congreso-de-los-diputados/',
+   action:'Piloto Harmony Mobile desbloqueado. Asegurar que se convierte en despliegue completo.'},
+
+  {id:12,name:'Karsos',sector:'Tecnología',city:'México',domain:'karsos.com.mx',health:'red',brandColor:'#1D4ED8',
+   news:'Sin noticias recientes. Sector tech en LATAM con crecimiento en digitalización empresarial.',newsUrl:null,
+   risk:'Sin email ni ticket activo. Cuenta en silencio total. Riesgo de pérdida silenciosa.',
+   trend:'Sector tecnológico en México y LATAM acelera adopción de MDM en equipos híbridos.',
+   email:{from:'Order Form',subject:'Re: Order Form [Karsos, S.A. de C.V]',date:'28 feb 2026',summary:'Expansión de +100 licencias procesada y facturada.'},
+   ticket:null,linearUrl:null,
+   linkedin:'Sin actividad reciente en LinkedIn corporativo.',linkedinUrl:'https://www.linkedin.com/company/karsos/',
+   action:'Contacto proactivo urgente. Verificar salud de cuenta y detectar cambios en el equipo IT.'},
+
+  {id:13,name:'Jungle',sector:'Software / Tech',city:'Madrid',domain:'jungle.io',health:'yellow',brandColor:'#111111',
+   news:'Crecimiento de equipo técnico en Madrid. Sin noticias corporativas públicas recientes.',newsUrl:null,
+   risk:'Sin email ni ticket activo. Alta rotación de perfiles IT puede implicar pérdida de adopción MDM.',
+   trend:'Empresas tech españolas de tamaño medio incrementan uso de MDM en modelos híbridos.',
+   email:{from:'Ángel (Jungle)',subject:'Facturación segundo año + Expansión Jungle MDM',date:'17 mar 2026',summary:'Propuesta para +200 licencias adicionales. Ángel necesita el valor para aprobación interna.'},
+   ticket:null,linearUrl:null,
+   linkedin:'Crecimiento del equipo técnico en Madrid y nuevas contrataciones en ingeniería.',linkedinUrl:'https://www.linkedin.com/company/jungleglobal/',
+   action:'Sin actividad en Gmail ni Linear. Verificar nuevas contrataciones IT o cambios de equipo.'},
+
+  {id:14,name:'AC Farma',sector:'Laboratorios',city:'Lima, Perú',domain:'acfarma.com.pe',health:'yellow',brandColor:'#0284C7',
+   news:'Laboratorio farmacéutico en LATAM bajo presión de auditorías de compliance.',newsUrl:null,
+   risk:'Sin email ni ticket activo. Sector farma exige trazabilidad de dispositivos.',
+   trend:'Digitalización del sector salud en LATAM impulsa trazabilidad de dispositivos.',
+   email:{from:'Order Form',subject:'Re: Order Form [Laboratorios AC Farma S.A.]',date:'3 mar 2026',summary:'Renovación MDM procesada y facturada.'},
+   ticket:null,linearUrl:null,
+   linkedin:'Sin actividad reciente en LinkedIn corporativo.',linkedinUrl:'https://www.linkedin.com/company/laboratorios-ac-farma/',
+   action:'Contacto proactivo para posicionar Applivery en contexto de compliance farmacéutico.'},
+
+  {id:15,name:'Olimpica',sector:'Retail',city:'Colombia',domain:'olimpica.com',health:'yellow',brandColor:'#CC0000',
+   news:'Retomaron pruebas MDM tras pausa. Planificando sesiones de despliegue masivo.',newsUrl:null,
+   risk:'Despliegue MDM en fase activa pero lenta. Pausa puede indicar dificultades internas.',
+   trend:'Retail colombiano apuesta por apps de gestión interna para mejorar operaciones.',
+   email:{from:'Equipo Olimpica',subject:'Re: Implementation Project initiation',date:'11 mar 2026',summary:'Confirman que retomaron pruebas. Preparando documentos por tipo de dispositivo.'},
+   ticket:null,linearUrl:null,
+   linkedin:'Digitalización de tiendas y expansión de la red de supermercados en Colombia.',linkedinUrl:'https://www.linkedin.com/company/olimpica-s-a-/',
+   action:'Hacer seguimiento del despliegue MDM. Ofrecer soporte técnico activo.'}
+];
+
+function getWeek(){
+  const n=new Date(2026,2,20),d=n.getDay(),diff=n.getDate()-d+(d===0?-6:1),m=new Date(n);
+  m.setDate(diff);
+  return 'Semana del '+m.getDate()+' '+m.toLocaleString('es-ES',{month:'short'})+' '+m.getFullYear();
+}
+
+function initials(name){return name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();}
+
+function ticketStatusClass(s){
+  if(!s) return 'status-default';
+  const l=s.toLowerCase();
+  if(l.includes('progress')) return 'status-progress';
+  if(l.includes('level')) return 'status-level';
+  if(l.includes('resolved')||l.includes('completed')) return 'status-resolved';
+  return 'status-default';
+}
+
+function linkBtn(href,label,color){
+  if(!href) return '';
+  return `<a class="link-btn" href="${href}" target="_blank" rel="noopener noreferrer" style="color:${color};border-color:${color}22;background:${color}11" onclick="event.preventDefault();window.open('${href}','_blank')">${label} ↗</a>`;
+}
+
+let currentFilter='all';
+let liveEmails={};
+let liveTickets={};
+
+function renderStats(){
+  const red=clients.filter(c=>c.health==='red').length;
+  const yellow=clients.filter(c=>c.health==='yellow').length;
+  const green=clients.filter(c=>c.health==='green').length;
+  document.getElementById('stats').innerHTML=`
+    <div class="stat"><div class="stat-label">Total cuentas</div><div class="stat-value">${clients.length}</div><div class="stat-sub">High Touch</div></div>
+    <div class="stat red"><div class="stat-label">En riesgo</div><div class="stat-value">${red}</div><div class="stat-sub">Requieren acción</div></div>
+    <div class="stat yellow"><div class="stat-label">Atención</div><div class="stat-value">${yellow}</div><div class="stat-sub">Seguimiento activo</div></div>
+  `;
+}
+
+function renderFilters(){
+  const counts={all:clients.length,red:clients.filter(c=>c.health==='red').length,yellow:clients.filter(c=>c.health==='yellow').length,green:clients.filter(c=>c.health==='green').length};
+  const btns=[
+    ['all','Todos',currentFilter==='all'?'active':''],
+    ['red','Riesgo',currentFilter==='red'?'active-red':''],
+    ['yellow','Atención',currentFilter==='yellow'?'active-yellow':''],
+    ['green','Saludables',currentFilter==='green'?'active-green':''],
+  ];
+  document.getElementById('filters').innerHTML=btns.map(([v,l,cls])=>
+    `<button class="filter-btn ${cls}" onclick="setFilter('${v}')">${l}<span class="badge">${counts[v]}</span></button>`
+  ).join('');
+}
+
+function setFilter(f){currentFilter=f;renderFilters();renderCards();}
+
+function renderCards(){
+  const list=currentFilter==='all'?clients:clients.filter(c=>c.health===currentFilter);
+  document.getElementById('cards').innerHTML=list.map(c=>renderCard(c)).join('');
+}
+
+function renderCard(c){
+  const email=liveEmails[c.id]||c.email;
+  const ticket=liveTickets[c.id]||c.ticket;
+  const ticketUrl=(liveTickets[c.id]&&liveTickets[c.id].url)||c.linearUrl;
+  const logoHtml=`<div class="logo-wrap"><img src="https://logo.dev/${c.domain}?token=pk_V09GpPbCSk2tJGJhfEerXw" alt="${c.name}" onerror="this.parentNode.outerHTML='<div class=logo-initials>${initials(c.name)}</div>'"></div>`;
+
+  return `<div class="card">
+    <div class="card-header ${c.health}">
+      ${logoHtml}
+      <div style="flex:1;min-width:0">
+        <div class="client-name">${c.name}</div>
+        <div class="client-meta">${c.sector} · ${c.city}</div>
+      </div>
+      <span class="health-badge health-${c.health}">${hLabel[c.health]}</span>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="news-box">
+          <div class="section-label">📰 Noticias</div>
+          <div class="section-text">${c.news}</div>
+          ${linkBtn(c.newsUrl,'Leer más','#1E2EDE')}
+        </div>
+        <div class="risk-box">
+          <div class="section-label" style="color:#f59e0b">⚠️ Alertas</div>
+          <div class="section-text">${c.risk}</div>
+        </div>
+      </div>
+      <div class="row single">
+        <div class="section-label">📈 Tendencia del sector</div>
+        <div class="section-text">${c.trend}</div>
+      </div>
+      <div class="row">
+        <div>
+          <div class="section-label">✉️ Último email</div>
+          <div class="email-subject">${email.subject}</div>
+          <div class="email-from">${email.from}</div>
+          <div class="email-summary">${email.summary}</div>
+          <div class="email-date">${email.date}</div>
+        </div>
+        <div>
+          <div class="section-label">🎫 Ticket Linear</div>
+          ${ticket
+            ? `<div class="ticket-id">${ticket.title}</div>
+               <span class="ticket-status ${ticketStatusClass(ticket.status)}">${ticket.status}</span>
+               <div class="section-text" style="margin-top:4px">${ticket.desc||''}</div>
+               ${linkBtn(ticketUrl,'Ver en Linear','#6b7fff')}`
+            : '<div class="no-ticket">Sin tickets activos.</div>'
+          }
+        </div>
+      </div>
+      <div class="row single">
+        <div class="section-label" style="color:#0ea5e9">💼 LinkedIn</div>
+        <div class="section-text">${c.linkedin}</div>
+        ${linkBtn(c.linkedinUrl,'Ver en LinkedIn','#0ea5e9')}
+      </div>
+      <div class="action-box">
+        <div class="action-label">🎯 Acción CSM esta semana</div>
+        <div class="action-text">${c.action}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function fetchGmail(client){
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
+        system:'You are a CSM assistant. Search Gmail for the most recent email related to the given client. Return ONLY a JSON object with keys: subject, from, date, summary. No markdown.',
+        messages:[{role:'user',content:'Search Gmail for the most recent email related to client: '+client.name+'. Return JSON.'}],
+        mcp_servers:[{type:'url',url:'https://gmail.mcp.claude.com/mcp',name:'gmail-mcp'}]})});
+    const d=await r.json();
+    const t=d.content?.filter(b=>b.type==='text').map(b=>b.text).join('');
+    liveEmails[client.id]=JSON.parse(t.replace(/```json|```/g,'').trim());
+  }catch(e){}
+}
+
+async function fetchLinear(client){
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
+        system:'You are a CSM assistant. Search Linear for the most recent issue for the given client. Return ONLY a JSON object with keys: title, status, desc, url. No markdown.',
+        messages:[{role:'user',content:'Search Linear for most recent issue for client: '+client.name+'. Return JSON.'}],
+        mcp_servers:[{type:'url',url:'https://mcp.linear.app/mcp',name:'linear-mcp'}]})});
+    const d=await r.json();
+    const t=d.content?.filter(b=>b.type==='text').map(b=>b.text).join('');
+    liveTickets[client.id]=JSON.parse(t.replace(/```json|```/g,'').trim());
+  }catch(e){}
+}
+
+async function refreshAll(){
+  const btn=document.getElementById('refresh-btn');
+  const lbl=document.getElementById('refresh-label');
+  btn.classList.add('loading');lbl.textContent='Actualizando...';
+  await Promise.all(clients.map(c=>Promise.all([fetchGmail(c),fetchLinear(c)])));
+  renderCards();
+  btn.classList.remove('loading');lbl.textContent='Actualizar datos';
+}
+
+// Init
+document.getElementById('week-label').textContent=getWeek()+' · Jorge Macauda';
+renderStats();
+renderFilters();
+renderCards();
+</script>
+</body>
+</html>
