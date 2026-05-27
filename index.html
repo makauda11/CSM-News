@@ -288,10 +288,10 @@ button{font-family:'Outfit',sans-serif;cursor:pointer}
     </div>
     <div class="grid2">
       <div class="fg2"><label class="fl">Additional ARR (€)</label><input class="fi" id="e-arr" type="number" placeholder="0"></div>
-      <div class="fg2"><label class="fl">Status</label><select class="fi" id="e-status"><option value="In Progress">In Progress</option><option value="Proposal Sent">Proposal Sent</option><option value="Won">Won</option><option value="Lost">Lost</option></select></div>
+      <div class="fg2"><label class="fl">Status</label><select class="fi" id="e-status"><option value="In Progress">In Progress</option><option value="Won">Won</option></select></div>
     </div>
     <div class="grid2">
-      <div class="fg2"><label class="fl">Licenses / Devices</label><input class="fi" id="e-lic" placeholder="e.g. +50 devices"></div>
+      <div class="fg2"><label class="fl">Upsell Driver</label><select class="fi" id="e-driver"><option value="Volume">Volume</option><option value="Price">Price</option><option value="Product Tier">Product Tier</option><option value="Discount Reduction">Discount Reduction</option><option value="Cross-sell">Cross-sell</option><option value="Multiyear">Multiyear</option><option value="Other">Other</option></select></div>
       <div class="fg2"><label class="fl">Opportunity Owner</label><input class="fi" id="e-owner" placeholder="e.g. Jorge Macauda"></div>
     </div>
     <div class="fg2"><label class="fl">Description / Notes</label><textarea class="fi" id="e-notes" rows="3" placeholder="Context, reason for expansion, next steps..."></textarea></div>
@@ -320,13 +320,13 @@ button{font-family:'Outfit',sans-serif;cursor:pointer}
       <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       Dashboard
     </div>
-    <div class="sbl">High Touch</div>
-    <div id="sb-ht"></div>
-    <div class="sbl">Quick Links</div>
     <div class="sbi" id="nav-exp" onclick="showExpPage()">
       <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
       Expansions
     </div>
+    <div class="sbl">High Touch</div>
+    <div id="sb-ht"></div>
+    <div class="sbl">Quick Links</div>
     <a class="sbi" href="https://linear.app/applivery" target="_blank">
       <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
       Linear SUPR
@@ -438,9 +438,10 @@ button{font-family:'Outfit',sans-serif;cursor:pointer}
     <!-- EXPANSIONS TABLE -->
     <div>
       <div class="sec-hdr">
-        <div class="sec-title">All Expansions</div>
+        <div class="sec-title">All Expansions <button class="btn btn-ghost btn-sm" id="exp-tbl-btn" onclick="toggleExpTable()" style="margin-left:8px;font-size:12px;padding:4px 10px">Collapse ▲</button></div>
         <div class="frow" id="exp-frow"></div>
       </div>
+      <div id="exp-tbl-container">
       <div class="tbl-wrap">
         <table>
           <thead><tr>
@@ -448,13 +449,14 @@ button{font-family:'Outfit',sans-serif;cursor:pointer}
             <th>Date</th>
             <th>Product</th>
             <th>ARR+</th>
-            <th>Licenses</th>
+            <th>Upsell Driver</th>
             <th>Owner</th>
             <th>Status</th>
             <th>Notes</th>
           </tr></thead>
           <tbody id="exp-tbody"></tbody>
         </table>
+      </div>
       </div>
     </div>
   </div>
@@ -474,17 +476,24 @@ button{font-family:'Outfit',sans-serif;cursor:pointer}
       <div class="sec-title">Expansions</div>
       <button class="btn btn-ghost btn-sm" onclick="openModal('modal-exp');E('e-acc').value='';currentDetailId=null">+ Add Expansion</button>
     </div>
-    <!-- Expansion ARR chart by Q -->
+    <!-- KPI Cards -->
+    <div class="kpi-row" id="exp-kpis" style="grid-template-columns:repeat(4,1fr)"></div>
+
+    <!-- Type filter + Chart -->
     <div class="chart-card">
-      <div class="sec-hdr" style="margin-bottom:0">
-        <div class="sec-title">Expansion ARR by Quarter</div>
-        <div style="display:flex;gap:12px;font-size:12px;color:var(--t3)">
-          <span><span class="legend-dot" style="background:var(--grn);display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Won</span>
-          <span><span class="legend-dot" style="background:var(--yel);display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle"></span>In Progress</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+        <div class="sec-title">Expansion ARR by Quarter <span class="sec-sub">2026</span></div>
+        <div style="display:flex;align-items:center;gap:16px">
+          <div id="exp-type-frow" style="display:flex;gap:6px"></div>
+          <div style="display:flex;gap:10px;font-size:12px;color:var(--t3)">
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--grn);margin-right:4px;vertical-align:middle"></span>Won</span>
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--yel);margin-right:4px;vertical-align:middle"></span>In Progress</span>
+          </div>
         </div>
       </div>
-      <canvas id="exp-chart" style="width:100%;display:block;height:180px;margin-top:14px"></canvas>
+      <canvas id="exp-chart" style="width:100%;display:block;height:200px;cursor:pointer"></canvas>
     </div>
+
     <!-- Full expansions table -->
     <div>
       <div class="sec-hdr">
@@ -495,7 +504,7 @@ button{font-family:'Outfit',sans-serif;cursor:pointer}
         <table>
           <thead><tr>
             <th>Account</th><th>Date</th><th>Product</th>
-            <th>ARR+</th><th>Licenses</th><th>Owner</th><th>Status</th><th>Notes</th>
+            <th>ARR+</th><th>Upsell Driver</th><th>Owner</th><th>Status</th><th>Notes</th>
           </tr></thead>
           <tbody id="exp-tbody2"></tbody>
         </table>
@@ -519,7 +528,16 @@ function lsSet(k,v){ try{localStorage.setItem(k,JSON.stringify(v))}catch{} }
 // Custom accounts added by user
 let customAccounts = ls('csm_custom_accounts') || [];
 // Expansions: {id, accountId, accountName, date, product, arr, status, licenses, owner, notes}
-let expansions = ls('csm_expansions') || [];
+let _defaultExp = [{"id": "exp-001", "accountId": "", "accountName": "Armesa", "date": "2026-01-01", "product": "MDM", "arr": 550.0, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "Expansion - Volume. Closed No big logo."}, {"id": "exp-002", "accountId": "", "accountName": "Trasmapi", "date": "2026-01-01", "product": "MDM", "arr": 600.0, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "Expansion - Volume. Closed No big logo."}, {"id": "exp-003", "accountId": "", "accountName": "DactilPlus", "date": "2026-01-01", "product": "MDM", "arr": 648.0, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "Expansion - Volume. Closed No big logo."}, {"id": "exp-004", "accountId": "", "accountName": "Tripledot Studios", "date": "2026-01-01", "product": "MDM", "arr": 1995.0, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "Expansion - Volume. Closed No big logo."}, {"id": "exp-005", "accountId": "", "accountName": "Karsos", "date": "2026-01-01", "product": "MDM", "arr": 3120.0, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "Expansion - Volume. Closed No big logo."}, {"id": "exp-006", "accountId": "", "accountName": "WeJungle", "date": "2026-02-01", "product": "MDM", "arr": 565.2, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "Expansion - Volume. Closed No big logo."}, {"id": "exp-007", "accountId": "", "accountName": "Starbucks", "date": "2026-02-01", "product": "MDM", "arr": 9000.0, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "In the renewal. Big logo. Closed."}, {"id": "exp-008", "accountId": "", "accountName": "Product Madness", "date": "2026-02-01", "product": "MDM", "arr": 11212.2, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "In the renewal. Big logo. Closed."}, {"id": "exp-009", "accountId": "", "accountName": "Aldar", "date": "2026-02-01", "product": "MDM", "arr": 18312.0, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "In the renewal. Big logo. Closed."}, {"id": "exp-010", "accountId": "", "accountName": "Ok Diario", "date": "2026-03-01", "product": "MDM", "arr": 960.0, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "In the renewal. Closed No big logo."}, {"id": "exp-011", "accountId": "", "accountName": "Colegio San Anselmo", "date": "2026-03-01", "product": "MDM", "arr": 1512.0, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "In the renewal. Closed No big logo."}, {"id": "exp-012", "accountId": "", "accountName": "Sixt", "date": "2026-03-01", "product": "Product Tier", "arr": 2315.1, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "In the renewal. Big logo. Closed."}, {"id": "exp-013", "accountId": "", "accountName": "Sabadell", "date": "2026-03-01", "product": "Product Tier", "arr": 3284.0, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "In the renewal. Big logo. Closed."}, {"id": "exp-014", "accountId": "", "accountName": "Acciona", "date": "2026-03-01", "product": "MDM", "arr": 7290.0, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "Expansion. Big logo. Closed."}, {"id": "exp-015", "accountId": "", "accountName": "Rally House", "date": "2026-03-01", "product": "MDM", "arr": 10134.5, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "Expansion. Big logo. Closed."}, {"id": "exp-016", "accountId": "", "accountName": "Derex", "date": "2026-04-01", "product": "MDM", "arr": 630.0, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "Expansion - Volume. Closed No big logo."}, {"id": "exp-017", "accountId": "", "accountName": "Counsa", "date": "2026-04-01", "product": "MDM", "arr": 660.0, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "Expansion - Volume. Closed No big logo."}, {"id": "exp-018", "accountId": "", "accountName": "LimitBreak", "date": "2026-04-01", "product": "MDM", "arr": 1653.0, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "In the renewal. Closed No big logo."}, {"id": "exp-019", "accountId": "", "accountName": "Rally House", "date": "2026-04-01", "product": "MDM", "arr": 34021.8, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "Expansion. Big logo. Closed."}, {"id": "exp-020", "accountId": "", "accountName": "DactilPlus", "date": "2026-05-01", "product": "MDM", "arr": 324.0, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "Expansion - Volume. Closed No big logo."}, {"id": "exp-021", "accountId": "", "accountName": "Banca de Quinielas de Montevideo", "date": "2026-05-01", "product": "MDM", "arr": 1080.0, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "Expansion - Volume. Closed No big logo."}, {"id": "exp-022", "accountId": "", "accountName": "Karsos", "date": "2026-05-01", "product": "MDM", "arr": 3120.0, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "Expansion - Volume. Closed No big logo."}, {"id": "exp-023", "accountId": "", "accountName": "WeJungle", "date": "2026-05-01", "product": "MDM", "arr": 3572.1, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "In the renewal. Big logo. Closed."}, {"id": "exp-024", "accountId": "", "accountName": "Sabadell", "date": "2026-05-01", "product": "MDM", "arr": 7990.0, "status": "Won", "licenses": "", "owner": "Jorge Macauda", "notes": "Expansion. Big logo. Closed."}, {"id": "exp-025", "accountId": "", "accountName": "Olimpica", "date": "2026-06-30", "product": "MDM", "arr": 2000.0, "status": "In Progress", "licenses": "", "owner": "Jorge Macauda", "notes": "Expansion. Expected close 30/6/2026."}, {"id": "exp-026", "accountId": "", "accountName": "Cabify/Vecttor", "date": "2026-06-30", "product": "MDM", "arr": 99000.0, "status": "In Progress", "licenses": "", "owner": "Jorge Macauda", "notes": "Expansion - Volume. Expected close 30/6/2026."}, {"id": "exp-027", "accountId": "", "accountName": "Cabify/Vecttor", "date": "2026-06-30", "product": "MAD", "arr": 15588.0, "status": "In Progress", "licenses": "", "owner": "Jorge Macauda", "notes": "Expansion - MAD. Expected close 30/6/2026."}, {"id": "exp-028", "accountId": "", "accountName": "Grupo el Castillo", "date": "2026-07-30", "product": "MAD", "arr": 8000.0, "status": "In Progress", "licenses": "", "owner": "Jorge Macauda", "notes": "Expansion. Expected close 30/7/2026."}];
+let expansions = (function(){
+  var saved = ls('csm_expansions');
+  // If nothing saved yet, seed with default data
+  if(!saved || saved.length === 0) {
+    lsSet('csm_expansions', _defaultExp);
+    return _defaultExp;
+  }
+  return saved;
+})();
 // All accounts = static + custom
 function allAccounts(){ return STATIC.concat(customAccounts); }
 
@@ -767,10 +785,10 @@ function renderExpTable(){
       '<td style="font-size:13px;color:var(--t3)">'+e.date+'</td>'+
       '<td><span class="tb-ht" style="background:var(--cdim);color:#7aadff">'+e.product+'</span></td>'+
       '<td><span class="arr-v">'+fmt(e.arr)+'</span></td>'+
-      '<td style="font-size:13px;color:var(--t2)">'+(e.licenses||'—')+'</td>'+
+      '<td style="font-size:13px;color:var(--t2)">'+(e.upsellDriver||'—')+'</td>'+
       '<td style="font-size:13px;color:var(--t2)">'+(e.owner||'—')+'</td>'+
       '<td>'+expBadge(e.status)+'</td>'+
-      '<td style="font-size:12px;color:var(--t3);max-width:200px;white-space:normal">'+trunc(e.notes,60)+'</td>'+
+      '<td style="font-size:12px;color:var(--t3);max-width:180px;white-space:normal">'+trunc(e.notes,60)+'</td>'+
     '</tr>';
   }).join('')+
   '<tr style="background:var(--s3)"><td colspan="3" style="font-weight:700;font-size:14px;color:var(--tx);padding:11px 15px">Total (filtered)</td>'+
@@ -915,14 +933,16 @@ function saveExpansion(){
   const acc=E('e-acc').value;
   const a=allAccounts().find(x=>x.name===acc);
   if(!a){alert('Account not found');return;}
+  function atype2(n){const ht=['Lidl','Congreso','Aldar','Sabadell','Sixt','AC Farma','Rally','Acciona','Mobility','Cecotec','Olimpica','Cabify','JUNGLE','Aristocrat','Karsos','Product Madness','Starbucks','WeJungle'];for(const h of ht)if(n.toLowerCase().includes(h.toLowerCase()))return 'High Touch';return 'Low Touch';}
   const exp={
     id:'exp-'+Date.now(),
     accountId:a.id,accountName:a.name,
+    accountType:atype2(a.name),
     date:E('e-date').value,
     product:E('e-prod').value,
     arr:parseFloat(E('e-arr').value)||0,
     status:E('e-status').value,
-    licenses:E('e-lic').value.trim(),
+    upsellDriver:E('e-driver').value,
     owner:E('e-owner').value.trim(),
     notes:E('e-notes').value.trim(),
   };
@@ -970,6 +990,7 @@ function closeSB(){E('sidebar').classList.remove('open');E('sb-ov').classList.re
 // ── INIT ──
 renderDash();
 setupChartClick();
+// setupExpChartClick called when exp page opens
 window.addEventListener('resize',()=>{ if(E('pg-dash').style.display!=='none')renderChart(); if(E('pg-exp')&&E('pg-exp').style.display!=='none')renderExpChart(); });
 
 // ── HERO FILTER ──
@@ -1011,6 +1032,14 @@ function toggleTable() {
   const btn = E('tbl-toggle-btn');
   if(tc) tc.style.display = tableExpanded ? 'block' : 'none';
   if(btn) btn.textContent = tableExpanded ? 'Collapse ▲' : 'Expand ▼';
+}
+let expTblExpanded = true;
+function toggleExpTable() {
+  expTblExpanded = !expTblExpanded;
+  const tc = E('exp-tbl-container');
+  const btn = E('exp-tbl-btn');
+  if(tc) tc.style.display = expTblExpanded ? 'block' : 'none';
+  if(btn) btn.textContent = expTblExpanded ? 'Collapse ▲' : 'Expand ▼';
 }
 
 // ── RENEWAL CHART CLICK ──
@@ -1064,6 +1093,7 @@ function showExpPage() {
   document.querySelectorAll('.sbi').forEach(i=>i.classList.remove('active'));
   const ne = E('nav-exp'); if(ne) ne.classList.add('active');
   renderExpPage();
+  setTimeout(setupExpChartClick, 100);
   closeSB();
 }
 
